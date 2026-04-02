@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Archive</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #fafafa; --surface: #ffffff; --border: #e8e8e8; --border-hover: #d0d0d0;
+            --text: #1d1d1f; --text-secondary: #86868b; --text-tertiary: #aeaeb2;
+            --accent: #da7756; --accent-hover: #c9654a; --accent-subtle: rgba(218,119,86,0.06);
+            --radius: 12px; --radius-sm: 8px;
+        }
+        html.dark {
+            --bg: #1a1a1a; --surface: #2a2a2a; --border: #3a3a3a; --border-hover: #4a4a4a;
+            --text: #e5e5e5; --text-secondary: #999; --text-tertiary: #666;
+            --accent: #e8956e; --accent-hover: #f0a882; --accent-subtle: rgba(232,149,110,0.1);
+        }
+        html.dark header { background: rgba(26,26,26,0.8); }
+        html.dark .lightbox { background: rgba(0,0,0,0.92); }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+            background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Nav bar */
+        header {
+            background: rgba(250,250,250,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+        }
+        .header-inner {
+            max-width: 1120px; margin: 0 auto; padding: 0 32px; height: 48px;
+            display: flex; align-items: center; gap: 24px;
+        }
+        .wordmark { font-size: 14px; font-weight: 600; letter-spacing: -0.3px; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 4px; margin-left: auto; }
+        .nav-links button {
+            padding: 6px 14px; background: none; border: none; border-radius: 6px;
+            color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 500;
+            font-family: inherit; transition: all 0.15s;
+        }
+        .nav-links button:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+        .nav-links button.active { color: var(--text); background: rgba(0,0,0,0.06); }
+        html.dark .nav-links button:hover { background: rgba(255,255,255,0.06); }
+        html.dark .nav-links button.active { background: rgba(255,255,255,0.1); }
+
+        .header-actions { display: flex; gap: 8px; align-items: center; margin-left: 8px; }
+        .icon-btn {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+            color: var(--text-secondary); transition: all 0.15s;
+        }
+        .icon-btn:hover { border-color: var(--border-hover); color: var(--text); }
+        .icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+        .emergency-btn {
+            padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            background: #dc2626; color: white; border: none; cursor: pointer;
+            font-family: inherit; transition: background 0.15s;
+        }
+        .emergency-btn:hover { background: #b91c1c; }
+
+        /* Chat panel */
+        .chat-panel {
+            position: fixed; top: 0; right: -420px; width: 420px; height: 100vh;
+            background: var(--surface); border-left: 1px solid var(--border);
+            z-index: 150; display: flex; flex-direction: column;
+            transition: right 0.25s ease; box-shadow: -4px 0 20px rgba(0,0,0,0.08);
+        }
+        .chat-panel.open { right: 0; }
+        html.dark .chat-panel { box-shadow: -4px 0 20px rgba(0,0,0,0.3); }
+
+        .chat-header {
+            padding: 14px 16px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        .chat-header h3 { font-size: 14px; font-weight: 600; }
+        .chat-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 18px; padding: 4px; }
+
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .chat-msg {
+            max-width: 88%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .chat-msg.user {
+            align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px;
+        }
+        .chat-msg.assistant {
+            align-self: flex-start; background: var(--bg); color: var(--text); border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .chat-msg.assistant p { margin: 2px 0; }
+        .chat-msg.assistant p:first-child { margin-top: 0; }
+        .chat-msg.assistant p:last-child { margin-bottom: 0; }
+        .chat-msg.assistant strong { font-weight: 600; }
+        .chat-msg.assistant ol, .chat-msg.assistant ul { margin: 4px 0 4px 20px; padding: 0; }
+        .chat-msg.assistant li { margin: 1px 0; padding: 0; }
+        .chat-msg.assistant br { display: block; content: ''; margin: 4px 0; }
+        .chat-msg.assistant code { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 13px; }
+        html.dark .chat-msg.assistant code { background: rgba(255,255,255,0.08); }
+        .chat-ref { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; }
+        .chat-msg.error { align-self: center; color: #dc2626; font-size: 13px; background: none; padding: 8px; }
+        .chat-typing { align-self: flex-start; color: var(--text-tertiary); font-size: 13px; padding: 8px; }
+
+        .chat-input-area {
+            padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+        }
+        .chat-input-row { display: flex; gap: 8px; }
+        .chat-input-row input {
+            flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 14px; color: var(--text); background: var(--bg); outline: none; font-family: inherit;
+        }
+        .chat-input-row input::placeholder { color: var(--text-tertiary); }
+        .chat-input-row input:focus { border-color: var(--accent); }
+        .chat-send {
+            padding: 10px 16px; background: var(--accent); color: white; border: none;
+            border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500;
+        }
+        .chat-send:hover { background: var(--accent-hover); }
+        .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+            .chat-panel { width: 100%; right: -100%; }
+        }
+
+        /* Emergency panel */
+        .emergency-panel {
+            display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.5);
+        }
+        .emergency-panel.active { display: flex; justify-content: center; align-items: flex-start; padding: 60px 20px; }
+        .emergency-content {
+            background: var(--surface); border-radius: var(--radius); max-width: 700px; width: 100%;
+            max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .emergency-content h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #dc2626; }
+        .emergency-content h3 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; }
+        .emergency-content p, .emergency-content li { font-size: 14px; line-height: 1.6; color: var(--text-secondary); }
+        .emergency-content ol, .emergency-content ul { margin-left: 20px; margin-bottom: 8px; }
+        .emergency-content .close-panel {
+            position: sticky; top: 0; float: right; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 6px; padding: 4px 12px; cursor: pointer; font-size: 13px; color: var(--text-secondary);
+            font-family: inherit;
+        }
+        .emergency-content .close-panel:hover { color: var(--text); }
+        .emergency-search { margin-bottom: 16px; position: relative; }
+        .emergency-search input {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 14px; color: var(--text); background: var(--bg); outline: none; font-family: inherit;
+        }
+        .emergency-section { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 8px; }
+        .emergency-section:last-child { border-bottom: none; }
+
+        main { max-width: 1120px; margin: 0 auto; padding: 32px; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+
+        /* Home hero */
+        .hero { padding: 48px 0 32px; text-align: center; }
+        .hero h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+        .hero-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; }
+        .hero-search {
+            max-width: 560px; margin: 0 auto; position: relative;
+        }
+        .hero-search input {
+            width: 100%; padding: 12px 16px 12px 40px; background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius); font-size: 15px;
+            color: var(--text); outline: none; font-family: inherit; transition: border-color 0.15s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .hero-search input::placeholder { color: var(--text-tertiary); }
+        .hero-search input:focus { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .hero-search svg {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            width: 16px; height: 16px; color: var(--text-tertiary); pointer-events: none;
+        }
+
+        /* Unified search results */
+        .unified-results { margin-top: 24px; text-align: left; }
+        .result-group { margin-bottom: 24px; }
+        .result-group-title {
+            font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .result-group-title span { cursor: pointer; color: var(--accent); font-size: 12px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+        .result-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .result-item {
+            display: flex; align-items: center; padding: 10px 16px;
+            border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s;
+            text-decoration: none; color: inherit;
+        }
+        .result-item:last-child { border-bottom: none; }
+        .result-item:hover { background: var(--bg); }
+        .result-item .ri-name { flex: 1; font-size: 14px; font-weight: 500; }
+        .result-item .ri-meta { font-size: 12px; color: var(--text-tertiary); margin-left: 8px; }
+        .result-item .ri-snippet { font-size: 13px; color: var(--text-secondary); margin-top: 2px; flex: 1; }
+        .result-item .ri-snippet mark { background: var(--accent-subtle); color: var(--accent); padding: 0 2px; border-radius: 2px; }
+        .result-item-col { display: flex; flex-direction: column; flex: 1; }
+
+        .result-art-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 12px;
+        }
+        .result-art-item {
+            border-radius: var(--radius-sm); overflow: hidden; cursor: pointer;
+            border: 1px solid var(--border); transition: border-color 0.15s;
+        }
+        .result-art-item:hover { border-color: var(--border-hover); }
+        .result-art-item img { width: 100%; height: 120px; object-fit: cover; display: block; }
+        .result-art-item .ra-title { padding: 6px 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.3; }
+
+        .suggest-line {
+            font-size: 13px; color: var(--text-secondary); margin-top: 12px; text-align: center;
+        }
+        .suggest-line a { color: var(--accent); text-decoration: none; font-weight: 500; cursor: pointer; }
+
+        /* Map */
+        #home-map { width: 100%; height: 360px; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 32px; }
+        .map-placeholder { width: 100%; height: 200px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: 13px; margin-top: 32px; background: var(--surface); }
+
+        /* Shared section styles */
+        .section-search { position: relative; margin-bottom: 20px; }
+        .section-search input {
+            width: 100%; padding: 10px 14px 10px 36px; background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px;
+            color: var(--text); outline: none; font-family: inherit; transition: border-color 0.15s;
+        }
+        .section-search input::placeholder { color: var(--text-tertiary); }
+        .section-search input:focus { border-color: var(--accent); }
+        .section-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-tertiary); pointer-events: none; }
+
+        .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .filter-btn {
+            padding: 5px 12px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; color: var(--text-secondary); cursor: pointer; font-size: 12px;
+            font-family: inherit; transition: all 0.15s;
+        }
+        .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+        .filter-btn.active { background: var(--text); color: white; border-color: var(--text); }
+
+        .sub-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .sub-tab {
+            padding: 8px 16px 10px; background: none; border: none; border-bottom: 2px solid transparent;
+            color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 500;
+            font-family: inherit; margin-bottom: -1px;
+        }
+        .sub-tab:hover { color: var(--text); }
+        .sub-tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+        .count-label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 16px; }
+        .section-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; margin-top: 32px; }
+        .section-label:first-child { margin-top: 0; }
+
+        /* Embed */
+        .embed-container { background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+        .embed-bar { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--bg); }
+        .embed-bar span { font-size: 13px; color: var(--text-secondary); }
+        .embed-btn { padding: 5px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 12px; font-family: inherit; }
+        .embed-btn:hover { border-color: var(--border-hover); color: var(--text); }
+        .embed-frame { width: 100%; height: 80vh; min-height: 500px; border: none; }
+
+        /* Art */
+        .art-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .art-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+        .art-card:hover { border-color: var(--border-hover); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .art-card img { width: 100%; height: 200px; object-fit: cover; display: block; background: var(--bg); }
+        .art-card .art-info { padding: 12px 14px; }
+        .art-card .art-title { font-size: 13px; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 2px; }
+        .art-card .art-artist { font-size: 12px; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .art-card .art-date { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+        /* Lightbox */
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 40px; }
+        .lightbox.active { display: flex; }
+        .lightbox-inner { max-width: 90vw; max-height: 90vh; position: relative; }
+        .lightbox img { max-width: 90vw; max-height: 80vh; object-fit: contain; border-radius: 4px; cursor: zoom-in; }
+        .lightbox.zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+        .lightbox.zoomed .lightbox-inner { max-width: none; max-height: none; overflow: auto; width: 90vw; height: 90vh; }
+        .lightbox.zoomed .lightbox-info { display: none; }
+        .lightbox-info { color: white; margin-top: 12px; text-align: center; }
+        .lightbox-info .lb-title { font-size: 15px; font-weight: 500; }
+        .lightbox-info .lb-artist { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .lightbox-info .lb-date { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        .lightbox-close { position: absolute; top: -32px; right: 0; background: none; border: none; color: rgba(255,255,255,0.7); font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1; }
+        .lightbox-close:hover { color: white; }
+
+        /* File lists */
+        .file-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .file-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); text-decoration: none; color: inherit; transition: background 0.1s; }
+        .file-item:last-child { border-bottom: none; }
+        .file-item:hover { background: var(--bg); }
+        .file-name { flex: 1; font-size: 14px; font-weight: 500; }
+        .file-size { font-size: 12px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+        .file-source { font-size: 11px; color: var(--text-tertiary); margin: 0 8px; }
+        .group-header { padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .doc-results { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .doc-result { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+        .doc-result:last-child { border-bottom: none; }
+        .doc-result:hover { background: var(--bg); }
+        .doc-result-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+        .doc-result-meta { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .doc-result-snippet { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+        .doc-result-snippet mark { background: var(--accent-subtle); color: var(--accent); padding: 0 2px; border-radius: 2px; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        .gallery-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
+        .gallery-card:hover { border-color: var(--border-hover); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .gallery-card a { text-decoration: none; color: inherit; display: block; }
+        .gallery-card .card-body { padding: 14px 16px; }
+        .gallery-card .card-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+        .gallery-card .card-meta { font-size: 12px; color: var(--text-tertiary); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-tertiary); font-size: 14px; }
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--text-secondary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        footer { text-align: center; padding: 32px; color: var(--text-tertiary); font-size: 12px; }
+
+        @media (max-width: 768px) {
+            .header-inner { padding: 0 16px; gap: 12px; }
+            .nav-links button { padding: 6px 10px; font-size: 12px; }
+            main { padding: 24px 16px; }
+            .hero { padding: 32px 0 24px; }
+            .hero h2 { font-size: 22px; }
+            .art-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            #home-map { height: 240px; }
+        }
+
+        html { scroll-behavior: smooth; }
+        ::selection { background: var(--accent-subtle); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <div class="wordmark">Knowledge Archive</div>
+            <nav class="nav-links">
+                <button class="active" onclick="switchTab('home')">Search</button>
+                <button onclick="switchTab('reference')">Reference</button>
+                <button onclick="switchTab('library')">Library</button>
+                <button onclick="switchTab('art')">Art</button>
+                <button onclick="switchTab('music')">Music</button>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="toggleChat()" title="Ask AI">
+                    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </button>
+                <button class="emergency-btn" onclick="toggleEmergency()">Emergency</button>
+                <button class="icon-btn" onclick="toggleDark()" title="Toggle dark mode">
+                    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Home: unified search -->
+        <section id="section-home" class="content-section active">
+            <div class="hero">
+                <h2>Knowledge Archive</h2>
+                <div class="hero-sub" id="hero-sub">Loading...</div>
+                <form class="hero-search" onsubmit="globalSearch(event)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="global-search" placeholder="Search everything..." autocomplete="off" oninput="debounceGlobalSearch()">
+                </form>
+            </div>
+            <div id="global-results"></div>
+            <div id="home-map-container"></div>
+        </section>
+
+        <!-- Reference -->
+        <section id="section-reference" class="content-section">
+            <div class="embed-container">
+                <div class="embed-bar">
+                    <span>Wikipedia, Gutenberg, Stack Overflow, WikiBooks, WikiMed</span>
+                    <button class="embed-btn" onclick="window.open('http://localhost:8080','_blank')">Open in new tab</button>
+                </div>
+                <iframe id="kiwix-frame" class="embed-frame" src="http://localhost:8080"></iframe>
+            </div>
+        </section>
+
+        <!-- Library -->
+        <section id="section-library" class="content-section">
+            <div class="sub-tabs">
+                <button class="sub-tab active" onclick="switchLibView('search')">Search</button>
+                <button class="sub-tab" onclick="switchLibView('files')">Browse</button>
+            </div>
+            <div id="lib-search-view">
+                <div class="section-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    <input type="text" id="lib-search-input" placeholder="Search guides..." autocomplete="off" oninput="debounceLibSearch()">
+                </div>
+                <div id="lib-search-results" class="empty-state">Search across all medical, survival, and homesteading guides</div>
+            </div>
+            <div id="lib-files-view" style="display: none;">
+                <div id="lib-category-filters" class="filters"></div>
+                <div id="lib-file-count" class="count-label"></div>
+                <div id="lib-files" class="file-list"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+        </section>
+
+        <!-- Art -->
+        <section id="section-art" class="content-section">
+            <div class="section-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <input type="text" id="art-search-input" placeholder="Search by title, artist, medium, culture..." autocomplete="off" oninput="debounceArtSearch()">
+            </div>
+            <div id="art-filters" class="filters"></div>
+            <div id="art-stats" class="count-label"></div>
+            <div id="art-gallery" class="art-grid"><div class="loading"><div class="spinner"></div></div></div>
+        </section>
+
+        <!-- Music -->
+        <section id="section-music" class="content-section">
+            <div class="section-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <input type="text" id="music-search-input" placeholder="Search by composer, work..." autocomplete="off" oninput="debounceMusicSearch()">
+            </div>
+            <div id="music-stats" class="count-label"></div>
+            <div id="music-filters" class="filters"></div>
+            <div id="music-files" class="file-list"><div class="loading"><div class="spinner"></div></div></div>
+        </section>
+    </main>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel" class="chat-panel">
+        <div class="chat-header">
+            <h3>Archive Assistant</h3>
+            <button class="chat-close" onclick="toggleChat()">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg assistant">I can help you find information across the archive. Ask me about medical procedures, survival skills, or anything else in the library.</div>
+        </div>
+        <div class="chat-input-area">
+            <form class="chat-input-row" onsubmit="sendChat(event)">
+                <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off">
+                <button type="submit" class="chat-send" id="chat-send">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Emergency Panel -->
+    <div id="emergency-panel" class="emergency-panel" onclick="if(event.target===this)toggleEmergency()">
+        <div class="emergency-content" id="emergency-content">
+            <button class="close-panel" onclick="toggleEmergency()">Close</button>
+            <h2>Emergency Quick Reference</h2>
+            <div class="emergency-search">
+                <input type="text" placeholder="Filter... (e.g. CPR, bleeding, burns)" oninput="filterEmergency(this.value)">
+            </div>
+            <div id="emergency-body"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="lightbox" onclick="if(event.target===this)closeLightbox()">
+        <div class="lightbox-inner">
+            <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+            <img id="lightbox-img" src="" alt="">
+            <div class="lightbox-info">
+                <div id="lb-title" class="lb-title"></div>
+                <div id="lb-artist" class="lb-artist"></div>
+                <div id="lb-date" class="lb-date"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer><p>Offline access to humanity's collected knowledge</p></footer>
+
+    <script src="/files/maps/lib/pmtiles.js"></script>
+    <script src="/files/maps/lib/maplibre-gl.js"></script>
+    <link rel="stylesheet" href="/files/maps/lib/maplibre-gl.css">
+    <script src="/files/maps/lib/protomaps-themes.js"></script>
+
+    <script>
+        // State
+        let artData = [], artFiltered = [], artPage = 0, activeArtDept = null;
+        let musicData = [], musicFiltered = [], activeMusicComposer = null;
+        let libData = [], libFiltered = [], activeLibCat = null;
+        let artWordIndex = [], musicWordIndex = [];
+        let mapInstance = null, pendingMapFile = null;
+        let artSearchTimer, musicSearchTimer, libSearchTimer, globalSearchTimer;
+        const ART_PAGE_SIZE = 60;
+
+        // Fuzzy matching
+        function editDist(a, b) {
+            if (!a.length) return b.length; if (!b.length) return a.length;
+            const m = Array.from({length: a.length+1}, (_,i) => [i]);
+            for (let j=1;j<=b.length;j++) m[0][j]=j;
+            for (let i=1;i<=a.length;i++) for (let j=1;j<=b.length;j++)
+                m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]!==b[j-1]?1:0));
+            return m[a.length][b.length];
+        }
+        function fuzzyMatch(q, words, n) {
+            const maxD = Math.max(1, Math.floor(q.length*0.4));
+            const scored = [];
+            for (const w of words) {
+                if (Math.abs(w.length-q.length)>maxD) continue;
+                const d=editDist(q,w); if(d>0&&d<=maxD) scored.push({word:w,dist:d});
+            }
+            return scored.sort((a,b)=>a.dist-b.dist).slice(0,n).map(s=>s.word);
+        }
+        function buildWordIndex(data, fields) {
+            const words = new Set();
+            data.forEach(item => fields.forEach(f => {
+                (item[f]||'').toLowerCase().split(/[^a-z]+/).forEach(w => { if(w.length>=3) words.add(w); });
+            }));
+            return [...words];
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            checkServices();
+            loadLibraryFiles();
+            loadArtMetadata();
+            loadMusicFiles();
+            initMap();
+            setInterval(checkServices, 30000);
+        });
+
+        async function checkServices() {
+            try { await fetch('http://localhost:8080/', {mode:'no-cors'}); } catch {}
+        }
+
+        // Navigation
+        const TABS = ['home','reference','library','art','music'];
+        function switchTab(name) {
+            document.querySelectorAll('.nav-links button').forEach((b,i) => b.classList.toggle('active', TABS[i]===name));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`section-${name}`).classList.add('active');
+            window.scrollTo(0,0);
+            if (name==='home' && mapInstance) mapInstance.resize();
+        }
+
+        // =============================================================
+        // Unified global search
+        // =============================================================
+        function debounceGlobalSearch() { clearTimeout(globalSearchTimer); globalSearchTimer = setTimeout(doGlobalSearch, 350); }
+        function globalSearch(e) { e.preventDefault(); doGlobalSearch(); }
+
+        async function doGlobalSearch() {
+            const q = document.getElementById('global-search').value.trim();
+            const container = document.getElementById('global-results');
+            if (!q || q.length < 2) { container.innerHTML = ''; return; }
+
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            const ql = q.toLowerCase();
+            const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Search all in parallel (including Kiwix + music PDF text)
+            const [libResp, artResults, musicMetaHits, musicTextHits, kiwixResults] = await Promise.all([
+                fetch(`/api/medical/search?q=${encodeURIComponent(q)}`).then(r=>r.json()).catch(()=>({results:[],suggestions:[]})),
+                Promise.resolve(artData.filter(a => [a.title,a.artist,a.medium,a.culture].some(f=>(f||'').toLowerCase().includes(ql)))),
+                Promise.resolve(musicData.filter(m => [m.name,m.composer,m.work].some(f=>(f||'').toLowerCase().includes(ql)))),
+                fetch(`/api/music/search?q=${encodeURIComponent(q)}`).then(r=>r.json()).catch(()=>[]),
+                fetch(`/api/kiwix/search?q=${encodeURIComponent(q)}`).then(r=>r.json()).catch(()=>[]),
+            ]);
+            // Merge music: metadata matches + text matches (deduplicated)
+            const seenPaths = new Set(musicMetaHits.map(m=>m.path));
+            musicTextHits.forEach(tr => {
+                const match = musicData.find(m => m.path && tr.path && (m.path===tr.path || tr.path.endsWith(m.path) || m.path.endsWith(tr.path.replace('sheet_music/',''))));
+                if (match && !seenPaths.has(match.path)) { musicMetaHits.push(match); seenPaths.add(match.path); }
+            });
+            const musicResults = musicMetaHits;
+
+            const libResults = libResp.results || [];
+            const suggestions = libResp.suggestions || [];
+            let html = '';
+
+            if (!libResults.length && !artResults.length && !musicResults.length && !kiwixResults.length) {
+                html = `<div class="empty-state">No results for "${q}"`;
+                // Combine suggestions from all sources
+                const allSuggestions = [...suggestions];
+                const artSug = fuzzyMatch(ql, artWordIndex, 3);
+                const musSug = fuzzyMatch(ql, musicWordIndex, 3);
+                const combined = [...new Set([...allSuggestions, ...artSug, ...musSug])].slice(0,5);
+                if (combined.length) {
+                    html += `<div class="suggest-line" style="margin-top:12px;">Did you mean: ${combined.map(s=>`<a onclick="document.getElementById('global-search').value='${s}';doGlobalSearch();">${s}</a>`).join(', ')}?</div>`;
+                }
+                html += '</div>';
+                container.innerHTML = html;
+                return;
+            }
+
+            html = '<div class="unified-results">';
+
+            // Kiwix/Reference results
+            if (kiwixResults.length) {
+                html += `<div class="result-group"><div class="result-group-title">Reference -- ${kiwixResults.length} results</div>`;
+                html += '<div class="result-card">';
+                kiwixResults.forEach(r => {
+                    html += `<a href="${r.url}" target="_blank" class="result-item"><div class="ri-name">${r.title}</div><div class="ri-meta">${r.source}</div></a>`;
+                });
+                html += '</div></div>';
+            }
+
+            // Library results
+            if (libResults.length) {
+                const libShow = 5, libTotal = libResults.length;
+                html += `<div class="result-group"><div class="result-group-title">Library -- ${libTotal}${libTotal>=50?'+':''} results</div>`;
+                html += '<div class="result-card">';
+                libResults.slice(0,libShow).forEach(r => {
+                    const snippet = r.snippet.replace(new RegExp(`(${escaped})`,'gi'),'<mark>$1</mark>');
+                    html += `<div class="result-item" onclick="openFile('${r.doc_id}')"><div class="result-item-col"><div class="ri-name">${r.title}</div><div class="ri-snippet">${snippet}</div></div><div class="ri-meta">${r.category} p${r.page}</div></div>`;
+                });
+                if (libTotal > libShow) html += `<div class="result-item" onclick="switchTab('library');document.getElementById('lib-search-input').value='${q}';doLibSearch();" style="justify-content:center;color:var(--accent);font-size:13px;font-weight:500;">View all ${libTotal}${libTotal>=50?'+':''} results</div>`;
+                html += '</div></div>';
+            }
+
+            // Art results
+            if (artResults.length) {
+                const artShow = 6, artTotal = artResults.length;
+                html += `<div class="result-group"><div class="result-group-title">Art -- ${artTotal} results</div>`;
+                html += '<div class="result-card"><div class="result-art-grid">';
+                artResults.slice(0,artShow).forEach(a => {
+                    html += `<div class="result-art-item" onclick="switchTab('art');document.getElementById('art-search-input').value='${q}';debounceArtSearch();"><img src="/files/met_art/${a.local_path}" loading="lazy" onerror="this.parentElement.style.display='none'"><div class="ra-title">${a.title||'Untitled'}</div></div>`;
+                });
+                html += '</div>';
+                if (artTotal > artShow) html += `<div class="result-item" onclick="switchTab('art');document.getElementById('art-search-input').value='${q}';debounceArtSearch();" style="justify-content:center;color:var(--accent);font-size:13px;font-weight:500;">View all ${artTotal} artworks</div>`;
+                html += '</div></div>';
+            }
+
+            // Music results
+            if (musicResults.length) {
+                const musShow = 5, musTotal = musicResults.length;
+                html += `<div class="result-group"><div class="result-group-title">Music -- ${musTotal} results</div>`;
+                html += '<div class="result-card">';
+                musicResults.slice(0,musShow).forEach(m => {
+                    html += `<a href="/files/${encodeURI(m.path)}" target="_blank" class="result-item"><div class="ri-name">${m.name}</div><div class="ri-meta">${m.composer}</div></a>`;
+                });
+                if (musTotal > musShow) html += `<div class="result-item" onclick="switchTab('music');document.getElementById('music-search-input').value='${q}';debounceMusicSearch();" style="justify-content:center;color:var(--accent);font-size:13px;font-weight:500;">View all ${musTotal} scores</div>`;
+                html += '</div></div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // =============================================================
+        // Library
+        // =============================================================
+        function switchLibView(view) {
+            document.querySelectorAll('#section-library .sub-tab').forEach(t=>t.classList.remove('active'));
+            document.getElementById('lib-search-view').style.display = view==='search'?'':'none';
+            document.getElementById('lib-files-view').style.display = view==='files'?'':'none';
+            document.querySelectorAll('#section-library .sub-tab')[view==='search'?0:1].classList.add('active');
+        }
+        function debounceLibSearch() { clearTimeout(libSearchTimer); libSearchTimer=setTimeout(doLibSearch,300); }
+        async function doLibSearch() {
+            const q=document.getElementById('lib-search-input').value.trim();
+            const c=document.getElementById('lib-search-results');
+            if(!q||q.length<2){c.innerHTML='<div class="empty-state">Search across all guides</div>';return;}
+            c.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const data=await fetch(`/api/medical/search?q=${encodeURIComponent(q)}`).then(r=>r.json());
+                const results=data.results||data, suggestions=data.suggestions||[];
+                if(!results.length){
+                    let h=`<div class="empty-state">No results for "${q}"`;
+                    if(suggestions.length) h+=`<div class="suggest-line" style="margin-top:12px;">Did you mean: ${suggestions.map(s=>`<a onclick="suggestLib('${s}')">${s}</a>`).join(', ')}?</div>`;
+                    c.innerHTML=h+'</div>'; return;
+                }
+                const esc=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+                c.innerHTML='<div class="doc-results">'+results.map(r=>{
+                    const sn=r.snippet.replace(new RegExp(`(${esc})`,'gi'),'<mark>$1</mark>');
+                    return `<div class="doc-result" onclick="openFile('${r.doc_id}')"><div class="doc-result-meta">${r.category} -- page ${r.page}</div><div class="doc-result-title">${r.title}</div><div class="doc-result-snippet">${sn}</div></div>`;
+                }).join('')+'</div>';
+            } catch { c.innerHTML='<div class="empty-state">Search unavailable</div>'; }
+        }
+        function suggestLib(t){document.getElementById('lib-search-input').value=t;doLibSearch();}
+
+        async function loadLibraryFiles() {
+            try {
+                libData=await fetch('/api/files/library').then(r=>r.json());
+                libFiltered=libData;
+                updateHeroSub();
+                renderLibFilters(); renderLibFiles();
+            } catch {}
+        }
+        function renderLibFilters() {
+            const cats={};libData.forEach(f=>{cats[f.category]=(cats[f.category]||0)+1;});
+            const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+            document.getElementById('lib-category-filters').innerHTML=
+                `<button class="filter-btn active" onclick="filterLib(null,event)">All (${libData.length})</button>`+
+                sorted.map(([c,n])=>`<button class="filter-btn" onclick="filterLib('${c.replace(/'/g,"\\'")}',event)">${c} (${n})</button>`).join('');
+        }
+        function filterLib(cat,evt) {
+            activeLibCat=cat;
+            document.querySelectorAll('#lib-category-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+            evt.target.classList.add('active');
+            libFiltered=cat?libData.filter(f=>f.category===cat):libData;
+            renderLibFiles();
+        }
+        function renderLibFiles() {
+            const c=document.getElementById('lib-files');
+            document.getElementById('lib-file-count').textContent=`${libFiltered.length} guides`;
+            if(!libFiltered.length){c.innerHTML='<div class="empty-state">No files found</div>';return;}
+            const grouped={};libFiltered.forEach(f=>{const k=f.category;if(!grouped[k])grouped[k]=[];grouped[k].push(f);});
+            let h='';
+            for(const[cat,files]of Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0]))){
+                h+=`<div class="group-header">${cat}</div>`;
+                files.forEach(f=>{h+=`<a href="/files/${encodeURI(f.path)}" target="_blank" class="file-item"><span class="file-name">${f.name}</span><span class="file-size">${formatSize(f.size)}</span></a>`;});
+            }
+            c.innerHTML=h;
+        }
+
+        // =============================================================
+        // Art
+        // =============================================================
+        async function loadArtMetadata() {
+            try {
+                artData=await fetch('/api/art/metadata').then(r=>r.json());
+                artFiltered=artData;
+                artWordIndex=buildWordIndex(artData,['title','artist','medium','culture','classification']);
+                updateHeroSub();
+                renderArtFilters(); renderArtGallery();
+            } catch { document.getElementById('art-gallery').innerHTML='<div class="empty-state">Art metadata not found</div>'; }
+        }
+        function renderArtFilters() {
+            const depts={};artData.forEach(a=>{if(a.department)depts[a.department]=(depts[a.department]||0)+1;});
+            document.getElementById('art-filters').innerHTML=
+                `<button class="filter-btn active" onclick="filterArt(null,event)">All</button>`+
+                Object.entries(depts).sort((a,b)=>b[1]-a[1]).map(([d])=>`<button class="filter-btn" onclick="filterArt('${d.replace(/'/g,"\\'")}',event)">${d}</button>`).join('');
+        }
+        function filterArt(d,e){activeArtDept=d;document.querySelectorAll('#art-filters .filter-btn').forEach(b=>b.classList.remove('active'));e.target.classList.add('active');applyArtFilters();}
+        function debounceArtSearch(){clearTimeout(artSearchTimer);artSearchTimer=setTimeout(applyArtFilters,200);}
+        function applyArtFilters() {
+            const q=(document.getElementById('art-search-input').value||'').toLowerCase().trim();
+            artFiltered=artData.filter(a=>{
+                if(activeArtDept&&a.department!==activeArtDept)return false;
+                if(!q)return true;
+                return[a.title,a.artist,a.medium,a.culture,a.date,a.classification].some(f=>(f||'').toLowerCase().includes(q));
+            });
+            artPage=0;
+            if(!artFiltered.length&&q.length>=3){
+                const sug=fuzzyMatch(q,artWordIndex,5);
+                if(sug.length){document.getElementById('art-gallery').innerHTML=`<div class="empty-state">No artworks match "${q}"<div class="suggest-line" style="margin-top:12px;">Did you mean: ${sug.map(s=>`<a onclick="document.getElementById('art-search-input').value='${s}';debounceArtSearch();">${s}</a>`).join(', ')}?</div></div>`;document.getElementById('art-stats').textContent='0 works';return;}
+            }
+            renderArtGallery();
+        }
+        function renderArtGallery() {
+            const c=document.getElementById('art-gallery'), items=artFiltered.slice(0,(artPage+1)*ART_PAGE_SIZE);
+            document.getElementById('art-stats').textContent=`Showing ${items.length} of ${artFiltered.length} works`;
+            if(!items.length){c.innerHTML='<div class="empty-state">No artworks match your search</div>';return;}
+            c.innerHTML=items.map((a,i)=>`<div class="art-card" onclick="openLightbox(${i})"><img src="/files/met_art/${a.local_path}" alt="${(a.title||'').replace(/"/g,'&quot;')}" loading="lazy" onerror="this.style.display='none'"><div class="art-info"><div class="art-title">${a.title||'Untitled'}</div><div class="art-artist">${a.artist||'Unknown'}</div>${a.date?`<div class="art-date">${a.date}</div>`:''}</div></div>`).join('');
+            if(items.length<artFiltered.length) c.innerHTML+=`<div style="grid-column:1/-1;text-align:center;padding:20px;"><button class="embed-btn" onclick="artPage++;renderArtGallery()" style="padding:8px 24px;">Load more</button></div>`;
+        }
+        function openLightbox(i) {
+            const a=artFiltered.slice(0,(artPage+1)*ART_PAGE_SIZE)[i]; if(!a)return;
+            document.getElementById('lightbox-img').src=`/files/met_art/${a.local_path}`;
+            document.getElementById('lb-title').textContent=a.title||'Untitled';
+            document.getElementById('lb-artist').textContent=a.artist||'';
+            document.getElementById('lb-date').textContent=[a.date,a.medium].filter(Boolean).join(' -- ');
+            document.getElementById('lightbox').classList.add('active');
+            document.body.style.overflow='hidden';
+        }
+        function closeLightbox(){document.getElementById('lightbox').classList.remove('active','zoomed');document.body.style.overflow='';}
+        document.getElementById('lightbox-img').addEventListener('click',function(e){
+            e.stopPropagation();const lb=document.getElementById('lightbox'),img=this,inner=lb.querySelector('.lightbox-inner');
+            if(lb.classList.contains('zoomed')){lb.classList.remove('zoomed');img.style.width='';}
+            else{lb.classList.add('zoomed');img.style.width=Math.max(img.naturalWidth,innerWidth*1.5)+'px';img.style.height='auto';
+                requestAnimationFrame(()=>{const r=inner.getBoundingClientRect();inner.scrollLeft=inner.scrollWidth*((e.clientX-r.left)/r.width)-inner.clientWidth/2;inner.scrollTop=inner.scrollHeight*((e.clientY-r.top)/r.height)-inner.clientHeight/2;});}
+        });
+        document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
+
+        // =============================================================
+        // Music
+        // =============================================================
+        async function loadMusicFiles() {
+            try {
+                musicData=await fetch('/api/files/music').then(r=>r.json());
+                musicFiltered=musicData;
+                musicWordIndex=buildWordIndex(musicData,['name','composer','work']);
+                updateHeroSub();
+                renderMusicFilters(); renderMusicList();
+            } catch { document.getElementById('music-files').innerHTML='<div class="empty-state">No sheet music found</div>'; }
+        }
+        function renderMusicFilters() {
+            const comps={};musicData.forEach(m=>{if(m.composer)comps[m.composer]=(comps[m.composer]||0)+1;});
+            document.getElementById('music-filters').innerHTML=
+                `<button class="filter-btn active" onclick="filterMusic(null,event)">All</button>`+
+                Object.entries(comps).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([c,n])=>`<button class="filter-btn" onclick="filterMusic('${c.replace(/'/g,"\\'")}',event)">${c} (${n})</button>`).join('');
+        }
+        function filterMusic(c,e){activeMusicComposer=c;document.querySelectorAll('#music-filters .filter-btn').forEach(b=>b.classList.remove('active'));e.target.classList.add('active');applyMusicFilters();}
+        function debounceMusicSearch(){clearTimeout(musicSearchTimer);musicSearchTimer=setTimeout(applyMusicFilters,200);}
+        async function applyMusicFilters() {
+            const q=(document.getElementById('music-search-input').value||'').toLowerCase().trim();
+
+            // Metadata filter
+            musicFiltered=musicData.filter(m=>{
+                if(activeMusicComposer&&m.composer!==activeMusicComposer)return false;
+                if(!q)return true;
+                return[m.name,m.composer,m.work].some(f=>(f||'').toLowerCase().includes(q));
+            });
+
+            // If we have a query, also search PDF text and merge
+            if(q&&q.length>=2){
+                try{
+                    const textResults=await fetch(`/api/music/search?q=${encodeURIComponent(q)}`).then(r=>r.json());
+                    if(textResults.length){
+                        const existingPaths=new Set(musicFiltered.map(m=>m.path));
+                        const metaByPath={};
+                        musicData.forEach(m=>{metaByPath[m.path]=m;});
+                        textResults.forEach(tr=>{
+                            // Match text result path to music metadata
+                            const match=musicData.find(m=>m.path&&tr.path&&(m.path===tr.path||tr.path.endsWith(m.path)||m.path.endsWith(tr.path.replace('sheet_music/',''))));
+                            if(match&&!existingPaths.has(match.path)){
+                                match._textMatch=tr.snippet;
+                                musicFiltered.push(match);
+                                existingPaths.add(match.path);
+                            }
+                        });
+                    }
+                }catch{}
+            }
+
+            if(!musicFiltered.length&&q&&q.length>=3){
+                const sug=fuzzyMatch(q,musicWordIndex,5);
+                if(sug.length){document.getElementById('music-files').innerHTML=`<div class="empty-state">No scores match "${q}"<div class="suggest-line" style="margin-top:12px;">Did you mean: ${sug.map(s=>`<a onclick="document.getElementById('music-search-input').value='${s}';debounceMusicSearch();">${s}</a>`).join(', ')}?</div></div>`;document.getElementById('music-stats').textContent='0 scores';return;}
+            }
+            renderMusicList();
+        }
+        function renderMusicList() {
+            const c=document.getElementById('music-files');
+            document.getElementById('music-stats').textContent=`${musicFiltered.length} scores from ${new Set(musicFiltered.map(m=>m.composer)).size} composers`;
+            if(!musicFiltered.length){c.innerHTML='<div class="empty-state">No scores match your search</div>';return;}
+            const grouped={};musicFiltered.forEach(m=>{const k=m.composer||'Unknown';if(!grouped[k])grouped[k]=[];grouped[k].push(m);});
+            let h='';
+            for(const[comp,scores]of Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0]))){
+                h+=`<div class="group-header">${comp}</div>`;
+                scores.forEach(s=>{h+=`<a href="/files/${encodeURI(s.path)}" target="_blank" class="file-item"><span class="file-name">${s.name}</span><span class="file-source">${s.source||''}</span><span class="file-size">${formatSize(s.size)}</span></a>`;});
+            }
+            c.innerHTML=h;
+        }
+
+        // =============================================================
+        // Map
+        // =============================================================
+        async function initMap() {
+            try {
+                const files=await fetch('/api/files/maps').then(r=>r.json());
+                const pm=files.find(f=>f.name.endsWith('.pmtiles'));
+                if(pm){document.getElementById('home-map-container').innerHTML='<div id="home-map"></div>';pendingMapFile=pm;setTimeout(loadMap,100);}
+                else{document.getElementById('home-map-container').innerHTML='<div class="map-placeholder">Map tiles not generated</div>';}
+            }catch{document.getElementById('home-map-container').innerHTML='';}
+        }
+        function loadMap() {
+            if(mapInstance||!pendingMapFile||typeof maplibregl==='undefined'||typeof pmtiles==='undefined')return;
+            const protocol=new pmtiles.Protocol();maplibregl.addProtocol('pmtiles',protocol.tile);
+            const url=`pmtiles://${location.origin}/files/${pendingMapFile.path}`;
+            let layers=[];
+            if(typeof protomaps_themes_base!=='undefined'){
+                const theme=protomaps_themes_base.namedTheme?protomaps_themes_base.namedTheme('light'):'light';
+                if(protomaps_themes_base.layersWithCustomTheme)layers=protomaps_themes_base.layersWithCustomTheme('protomaps',theme,'en');
+                else if(protomaps_themes_base.layers)layers=protomaps_themes_base.layers('protomaps',theme,'en');
+            }
+            mapInstance=new maplibregl.Map({container:'home-map',style:{version:8,glyphs:'https://cdn.protomaps.com/fonts/pbf/{fontstack}/{range}.pbf',sources:{protomaps:{type:'vector',url:url,attribution:'OpenStreetMap contributors'}},layers:layers},center:[-98.5,39.8],zoom:4});
+            mapInstance.addControl(new maplibregl.NavigationControl(),'top-right');
+            mapInstance.addControl(new maplibregl.ScaleControl(),'bottom-left');
+        }
+
+        // =============================================================
+        // Utils
+        // =============================================================
+        function updateHeroSub() {
+            const parts = [];
+            parts.push('6.8M articles');
+            if(libData.length) parts.push(`${libData.length} guides`);
+            if(artData.length) parts.push(`${artData.length.toLocaleString()} artworks`);
+            if(musicData.length) parts.push(`${musicData.length.toLocaleString()} scores`);
+            document.getElementById('hero-sub').textContent = parts.join(' / ');
+        }
+        function openFile(p){window.open(`/files/${p}`,'_blank');}
+        function formatSize(b){if(!b)return'';const u=['B','KB','MB','GB'];let i=0;while(b>=1024&&i<u.length-1){b/=1024;i++;}return`${b.toFixed(1)} ${u[i]}`;}
+
+        // =============================================================
+        // Chat with RAG
+        // =============================================================
+        let chatHistory = [];
+        let chatStreaming = false;
+
+        function toggleChat() {
+            document.getElementById('chat-panel').classList.toggle('open');
+            if (document.getElementById('chat-panel').classList.contains('open')) {
+                document.getElementById('chat-input').focus();
+            }
+        }
+
+        async function sendChat(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const q = input.value.trim();
+            if (!q || chatStreaming) return;
+            input.value = '';
+
+            // Add user message
+            chatUserScrolled = false;
+            chatHistory.push({ role: 'user', content: q });
+            appendChatMsg('user', q);
+
+            // Stream response
+            chatStreaming = true;
+            document.getElementById('chat-send').disabled = true;
+            const assistantEl = appendChatMsg('assistant', '');
+            assistantEl.innerHTML = '<span class="chat-typing">Thinking...</span>';
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatHistory }),
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    assistantEl.className = 'chat-msg error';
+                    assistantEl.textContent = err.error || 'AI unavailable. Make sure the model is loaded.';
+                    chatStreaming = false;
+                    document.getElementById('chat-send').disabled = false;
+                    return;
+                }
+
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = '';
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+                        try {
+                            const chunk = JSON.parse(line.slice(6));
+                            const delta = chunk.choices?.[0]?.delta?.content || '';
+                            if (delta) {
+                                fullText += delta;
+                                assistantEl.innerHTML = renderMarkdown(fullText);
+                                scrollChat();
+                            }
+                        } catch {}
+                    }
+                }
+
+                if (!fullText) {
+                    assistantEl.innerHTML = '<em style="color:var(--text-tertiary)">No response</em>';
+                }
+                chatHistory.push({ role: 'assistant', content: fullText });
+
+            } catch (err) {
+                assistantEl.className = 'chat-msg error';
+                assistantEl.textContent = 'Connection failed. Is the AI model running?';
+            }
+
+            chatStreaming = false;
+            document.getElementById('chat-send').disabled = false;
+        }
+
+        function appendChatMsg(role, text) {
+            const container = document.getElementById('chat-messages');
+            const el = document.createElement('div');
+            el.className = `chat-msg ${role}`;
+            el.innerHTML = role === 'assistant' ? renderMarkdown(text) : escapeHtml(text);
+            container.appendChild(el);
+            scrollChat();
+            return el;
+        }
+
+        let chatUserScrolled = false;
+        document.getElementById('chat-messages').addEventListener('scroll', function() {
+            const c = this;
+            chatUserScrolled = (c.scrollHeight - c.scrollTop - c.clientHeight) > 80;
+        });
+
+        function scrollChat() {
+            if (chatUserScrolled) return;
+            const c = document.getElementById('chat-messages');
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function renderMarkdown(text) {
+            let html = escapeHtml(text);
+            // Citations with file refs -> clickable links
+            html = html.replace(/\[([A-Z]+)\s*-\s*([^,\]]+),\s*p([\d\-]+)\s*\|\s*ref:([^\]]+)\]/g,
+                (_, cat, title, page, filepath) => `<a href="/files/${encodeURI(filepath.trim())}" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:500;font-size:12px;border:1px solid var(--border);padding:2px 8px;border-radius:4px;display:inline-block;margin:2px 0;">${title.trim()}, p${page}</a>`);
+            // Citations without ref -> plain styled
+            html = html.replace(/\[([A-Z]+)\s*-\s*([^\]]+)\]/g,
+                (_, cat, rest) => `<span style="color:var(--text-tertiary);font-size:12px;">[${cat} - ${rest}]</span>`);
+            // Headers -> bold text
+            html = html.replace(/^#{1,4}\s+(.+)$/gm, '<strong>$1</strong>');
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Italic
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            // Inline code
+            html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+            // Split into lines and build HTML
+            const lines = html.split('\n');
+            let out = '', inList = false;
+            for (let i = 0; i < lines.length; i++) {
+                const trimmed = lines[i].trim();
+                if (!trimmed) {
+                    if (inList) { out += '</ol>'; inList = false; }
+                    // Skip consecutive blank lines
+                    if (i > 0 && !lines[i-1].trim()) continue;
+                    continue;
+                } else if (/^\d+[\.\)]\s/.test(trimmed)) {
+                    if (!inList) { out += '<ol>'; inList = true; }
+                    out += '<li>' + trimmed.replace(/^\d+[\.\)]\s*/, '') + '</li>';
+                } else if (/^[-*]\s/.test(trimmed)) {
+                    if (!inList) { out += '<ul>'; inList = true; }
+                    out += '<li>' + trimmed.replace(/^[-*]\s*/, '') + '</li>';
+                } else {
+                    if (inList) { out += '</ol>'; inList = false; }
+                    // Clean up "Reference:" prefix text
+                    const cleaned = trimmed.replace(/^Reference:\s*/i, '');
+                    if (cleaned !== trimmed && !cleaned) continue;
+                    out += '<p>' + (cleaned !== trimmed ? cleaned : trimmed) + '</p>';
+                }
+            }
+            if (inList) out += '</ol>';
+            // Clean up empty paragraphs
+            out = out.replace(/<p>\s*<\/p>/g, '');
+            return out;
+        }
+
+        // =============================================================
+        // Dark mode
+        // =============================================================
+        function toggleDark() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('dark', document.documentElement.classList.contains('dark') ? '1' : '0');
+        }
+        if (localStorage.getItem('dark') === '1') document.documentElement.classList.add('dark');
+
+        // =============================================================
+        // Emergency panel
+        // =============================================================
+        let emergencyLoaded = false;
+        let emergencySections = [];
+
+        function toggleEmergency() {
+            const panel = document.getElementById('emergency-panel');
+            panel.classList.toggle('active');
+            if (panel.classList.contains('active') && !emergencyLoaded) loadEmergency();
+            document.body.style.overflow = panel.classList.contains('active') ? 'hidden' : '';
+        }
+
+        async function loadEmergency() {
+            try {
+                const text = await fetch('/api/emergency').then(r => r.text());
+                emergencySections = parseEmergencyText(text);
+                renderEmergency(emergencySections);
+                emergencyLoaded = true;
+            } catch {
+                document.getElementById('emergency-body').innerHTML = '<div class="empty-state">Could not load emergency knowledge</div>';
+            }
+        }
+
+        function parseEmergencyText(text) {
+            const sections = [];
+            let current = null;
+            for (const line of text.split('\n')) {
+                if (line.startsWith('### ')) {
+                    if (current) sections.push(current);
+                    current = { title: line.replace(/^#+\s*/, ''), body: '' };
+                } else if (line.startsWith('## ')) {
+                    if (current) sections.push(current);
+                    current = { title: line.replace(/^#+\s*/, ''), body: '', isCategory: true };
+                } else if (current) {
+                    current.body += line + '\n';
+                }
+            }
+            if (current) sections.push(current);
+            return sections;
+        }
+
+        function renderEmergency(sections) {
+            const body = document.getElementById('emergency-body');
+            body.innerHTML = sections.map(s => {
+                if (s.isCategory) return `<div class="section-label" style="margin-top:24px;">${s.title}</div>`;
+                const lines = s.body.trim().split('\n').map(l => {
+                    l = l.trim();
+                    if (!l) return '';
+                    if (l.match(/^\d+\./)) return `<li>${l.replace(/^\d+\.\s*/, '')}</li>`;
+                    if (l.startsWith('- ')) return `<li>${l.substring(2)}</li>`;
+                    return `<p>${l}</p>`;
+                }).join('');
+                const hasList = lines.includes('<li>');
+                const content = hasList ? `<ol>${lines}</ol>` : lines;
+                return `<div class="emergency-section" data-title="${s.title.toLowerCase()}"><h3>${s.title}</h3>${content}</div>`;
+            }).join('');
+        }
+
+        function filterEmergency(q) {
+            const ql = q.toLowerCase();
+            document.querySelectorAll('.emergency-section').forEach(el => {
+                const title = el.dataset.title || '';
+                const text = el.textContent.toLowerCase();
+                el.style.display = (!ql || title.includes(ql) || text.includes(ql)) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                const ep = document.getElementById('emergency-panel');
+                if (ep.classList.contains('active')) { toggleEmergency(); return; }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Get the directory where the .app bundle is located
+APP_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
+cd "$APP_DIR"
+
+# Detect architecture
+ARCH=$(uname -m)
+
+# Try portable Python first
+PORTABLE_PYTHON=""
+if [[ "$ARCH" == "arm64" ]] && [[ -f "python_portable/python_mac_arm/python/bin/python3" ]]; then
+    PORTABLE_PYTHON="python_portable/python_mac_arm/python/bin/python3"
+elif [[ -f "python_portable/python_mac_intel/python/bin/python3" ]]; then
+    PORTABLE_PYTHON="python_portable/python_mac_intel/python/bin/python3"
+fi
+
+if [[ -n "$PORTABLE_PYTHON" ]]; then
+    "$PORTABLE_PYTHON" START_ARCHIVE.py
+    exit 0
+fi
+
+# Try system Python
+if command -v python3 &> /dev/null; then
+    python3 START_ARCHIVE.py
+    exit 0
+fi
+
+if command -v python &> /dev/null; then
+    python START_ARCHIVE.py
+    exit 0
+fi
+
+# No Python - show error dialog
+osascript -e 'display alert "Python Not Found" message "Please install Python from python.org or run setup_portable_python.py first." as critical'

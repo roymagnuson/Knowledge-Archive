@@ -1,0 +1,359 @@
+# Emergency Knowledge Reference
+# This file is loaded into the AI assistant's context to provide essential survival and medical knowledge.
+# Sources: WHO guidelines, US Army FM 21-76, "Where There Is No Doctor", Red Cross first aid manuals.
+
+## MEDICAL EMERGENCIES
+
+### Bleeding Control
+1. Apply direct pressure with clean cloth
+2. Elevate wound above heart if possible
+3. If bleeding through, add more cloth — don't remove first layer
+4. For severe limb bleeding: tourniquet 2-3 inches above wound, note time applied
+5. Tourniquets: tighten until bleeding stops, max 2 hours before tissue damage
+6. Wound packing: for deep wounds, pack clean cloth firmly into wound, then apply pressure
+
+### CPR (Adult)
+1. Check responsiveness — tap shoulders, shout
+2. Call for help
+3. 30 chest compressions: heel of hand on center of chest, 2 inches deep, 100-120/min
+4. 2 rescue breaths: tilt head back, lift chin, pinch nose, breathe until chest rises
+5. Continue 30:2 ratio until help arrives or person recovers
+
+CPR (Child 1-8 years): same ratio, one hand, 1.5 inches deep
+CPR (Infant <1 year): 2 fingers on sternum, 1.5 inches, 30:2, cover mouth AND nose with your mouth
+
+### Choking (Adult)
+1. If coughing, encourage continued coughing
+2. If cannot breathe/speak: stand behind, make fist above navel
+3. Grasp fist with other hand, thrust inward and upward
+4. Repeat until object expelled or person unconscious
+5. If unconscious: begin CPR, check mouth for object before breaths
+
+Choking (Infant): 5 back blows (face down on forearm), then 5 chest thrusts (face up, 2 fingers on sternum). Alternate until clear.
+
+### Shock
+Signs: pale/cool/clammy skin, rapid weak pulse, rapid shallow breathing, confusion
+Treatment:
+1. Lay person flat, elevate legs 12 inches (unless head/spine injury)
+2. Keep warm with blankets
+3. Don't give food or water
+4. Monitor breathing
+
+### Burns
+- Minor (red, no blisters): cool running water 10-20 min, aloe vera, loose bandage
+- Moderate (blisters): cool water, don't pop blisters, loose sterile bandage
+- Severe (white/charred): don't remove clothing stuck to burn, cover loosely, seek help
+- Chemical burns: flush with water 20+ minutes, remove contaminated clothing
+- Electrical burns: ensure power off before touching person, check for exit wound
+
+Burns rule of 9s (adult body surface area):
+- Head: 9% | Each arm: 9% | Chest: 18% | Back: 18% | Each leg: 18% | Groin: 1%
+- Burns >15% BSA in adults or >10% in children = critical, risk of shock
+
+### Wound Closure
+When to close: clean cuts <6 hours old, not from bites, no signs of infection
+When NOT to close: puncture wounds, animal/human bites, dirty wounds, wounds >12 hours old
+
+Butterfly strips / steri-strips:
+1. Clean wound thoroughly with clean water
+2. Dry skin around wound (not inside)
+3. Apply strips perpendicular to wound, pulling edges together
+4. Space strips 3mm apart, leave gaps for drainage
+5. Apply a strip lengthwise over the ends to anchor
+
+Improvised sutures (last resort, only for gaping wounds that won't stay closed):
+1. Sterilize needle (boil 20 min or hold in flame until red)
+2. Use thin, strong thread (fishing line, dental floss) — boil first
+3. Enter skin 5mm from wound edge, exit same distance on other side
+4. Tie square knots, snug but not tight (skin swells)
+5. Space sutures 5-7mm apart
+6. Watch for infection: increasing redness, warmth, pus, red streaks, fever
+
+### Fractures/Sprains
+1. Immobilize the injury — splint in position found
+2. Ice wrapped in cloth — 20 min on, 20 min off
+3. Elevate if possible
+4. For open fracture (bone visible): cover wound, don't push bone back, splint around it
+
+Splinting: immobilize joint above AND below the fracture. Pad all bony points. Check circulation below splint (pulse, color, warmth) every 15 min.
+
+### Head Injury
+Concussion signs: headache, confusion, nausea, dizziness, brief unconsciousness
+DANGER signs (seek urgent help):
+- Unequal pupils
+- Clear fluid from nose or ears
+- Worsening headache
+- Repeated vomiting
+- Seizures
+- Cannot be awakened
+- Weakness on one side
+
+Keep awake and monitor for 24 hours. Wake every 2 hours if sleeping.
+
+### Heat Emergencies
+Heat exhaustion: heavy sweating, weakness, cool/pale skin, nausea
+- Move to shade, cool water, fan, sip water
+
+Heat stroke: hot/red/dry skin, high temp (>104°F/40°C), confusion, unconscious
+- EMERGENCY — cool rapidly: ice packs to neck/armpits/groin, cool water immersion
+- Do NOT give fluids if unconscious
+
+### Hypothermia
+Signs: shivering, confusion, slurred speech, drowsiness
+Severe: shivering stops, very slow pulse, unconsciousness
+1. Move to warmth/shelter
+2. Remove wet clothing
+3. Warm center of body first (chest, neck, head, groin)
+4. Warm beverages if conscious (no alcohol, no caffeine)
+5. Skin-to-skin contact under blankets if available
+6. Handle gently — rough movement can cause cardiac arrest in severe hypothermia
+
+### Dehydration
+Signs: thirst, dark urine, dry mouth, headache, dizziness
+Severe: no urine, sunken eyes, rapid pulse, confusion
+
+Oral Rehydration Solution (ORS):
+- Recipe: 1 liter clean water + 6 level teaspoons sugar + ½ level teaspoon salt
+- Give small sips every 1-2 minutes
+- For children: 1 cup (250ml) after each loose stool
+- Continue even if vomiting — give smaller amounts more frequently
+
+### Allergic Reaction (Anaphylaxis)
+Signs: swelling face/throat, difficulty breathing, hives, rapid pulse, dizziness
+1. EpiPen if available: outer thigh, through clothing, hold 10 seconds
+2. Lay flat with legs elevated (or sitting if breathing difficulty)
+3. Second EpiPen after 5-15 min if no improvement
+4. If no EpiPen: antihistamine (diphenhydramine/Benadryl) — won't stop severe reaction but helps
+
+### Poisoning
+1. Identify what was ingested if possible
+2. Do NOT induce vomiting (especially for corrosives, petroleum products)
+3. If conscious: activated charcoal (1g per kg body weight) mixed in water, within 1 hour of ingestion
+4. If on skin: remove contaminated clothing, flush with water 15-20 min
+5. If inhaled: move to fresh air
+
+### Dental Emergencies
+Knocked-out tooth:
+1. Handle by crown only (never touch root)
+2. Rinse gently with clean water — do not scrub
+3. Reimplant into socket if possible, bite on cloth to hold
+4. If can't reimplant: store in milk, saliva, or saline
+5. Reimplant within 30 min for best chance of survival
+
+Toothache/abscess:
+- Rinse with warm salt water (1 tsp salt per cup)
+- Ibuprofen for pain (see dosage table below)
+- Clove oil on cotton ball applied to tooth (natural anesthetic — eugenol)
+- Abscess (swelling with pus): warm salt water rinses every 2 hours. If fever or spreading redness, antibiotics needed
+
+Broken tooth: cover sharp edge with dental wax, chewing gum, or candle wax to protect tongue
+
+### Drowning
+1. Remove from water (protect your own safety first)
+2. If not breathing: begin CPR immediately
+3. Do NOT attempt to drain water from lungs (Heimlich doesn't help)
+4. Continue CPR for at least 30 minutes — cold water drowning victims can recover after long submersion
+5. Even if person seems fine after rescue: monitor for 24 hours (secondary drowning from water in lungs)
+
+### Seizures
+1. Protect from injury — clear area of hard/sharp objects
+2. Do NOT put anything in mouth
+3. Do NOT restrain
+4. Turn on side after seizure stops (recovery position)
+5. Time the seizure — if >5 minutes, this is an emergency
+
+## COMMON MEDICATION DOSAGES
+
+IMPORTANT: These are general guidelines for common over-the-counter medications. When in doubt, use the lowest effective dose. Adjust for elderly (use lower doses) and those with liver/kidney problems.
+
+### Pain & Fever
+
+Ibuprofen (Advil, Motrin):
+- Adult: 200-400mg every 4-6 hours, max 1200mg/day (OTC) or 3200mg (prescribed)
+- Child 6mo-12yr: 5-10mg per kg every 6-8 hours
+- Take with food. Avoid if kidney problems, stomach ulcers, or heavy bleeding.
+
+Acetaminophen / Paracetamol (Tylenol):
+- Adult: 500-1000mg every 4-6 hours, max 3000mg/day
+- Child: 10-15mg per kg every 4-6 hours
+- DANGER: Overdose causes liver failure. Never exceed max dose. Avoid with alcohol.
+
+Aspirin:
+- Adult: 325-650mg every 4 hours, max 4000mg/day
+- Heart attack: chew 1 regular aspirin (325mg) immediately
+- NEVER give to children <16 (risk of Reye's syndrome)
+
+### Allergies
+
+Diphenhydramine (Benadryl):
+- Adult: 25-50mg every 4-6 hours, max 300mg/day
+- Child 6-12: 12.5-25mg every 4-6 hours
+- Causes drowsiness. Use for allergic reactions, itching, insomnia.
+
+Loratadine (Claritin) / Cetirizine (Zyrtec):
+- Adult: 10mg once daily
+- Child 2-6: 5mg once daily
+- Non-drowsy antihistamines. For ongoing allergies, not acute reactions.
+
+### Diarrhea
+
+Loperamide (Imodium):
+- Adult: 4mg first dose, then 2mg after each loose stool, max 16mg/day
+- Do NOT use if bloody stool or fever >101°F/38.5°C (may be dysentery — body needs to expel infection)
+
+### Stomach
+
+Antacids (Tums, calcium carbonate):
+- Adult: 500-1000mg as needed, max 7500mg/day
+- For heartburn, indigestion, calcium supplement
+
+### Topical
+
+Antibiotic ointment (Neosporin, bacitracin):
+- Apply thin layer to clean wounds 1-3x daily
+- Cover with clean bandage
+- Stop if rash develops (allergic reaction)
+
+Hydrocortisone cream (1%):
+- For itching, rashes, insect bites, mild eczema
+- Apply thin layer 2-4x daily, max 7 days
+- Do NOT use on open wounds or infected skin
+
+## INFECTION RECOGNITION
+
+Signs of wound infection (usually 2-5 days after injury):
+1. Increasing redness spreading from wound
+2. Increasing pain and swelling
+3. Warmth around wound
+4. Pus or cloudy drainage
+5. Red streaks extending from wound (lymphangitis — URGENT)
+6. Fever, chills, body aches
+
+If red streaks, high fever, or rapidly spreading redness: this is a life-threatening emergency. Antibiotics are critical. Draw a line around the redness edge with pen and monitor hourly for spread.
+
+## SURVIVAL PRIORITIES
+
+### Rule of 3s
+- 3 minutes without air
+- 3 hours without shelter (extreme conditions)
+- 3 days without water
+- 3 weeks without food
+
+### Water
+Finding:
+- Follow animal trails downhill (often lead to water)
+- Birds flying low at dawn/dusk often heading to water
+- Dig in dry riverbeds, outside bends
+- Collect dew with cloth at dawn
+- Rain collection
+- Green vegetation in arid areas indicates water nearby
+
+Purification (priority order):
+1. Boiling: rolling boil for 1 minute (3 min above 6500 ft / 2000m)
+2. Chemical: 2 drops household bleach (5-6% sodium hypochlorite) per liter, wait 30 min (double if cloudy)
+3. Iodine: 5 drops 2% tincture per liter clear water, wait 30 min
+4. Solar: clear PET bottle in direct sun 6+ hours (SODIS method)
+5. Filter through cloth, sand, charcoal (removes particles, not all pathogens)
+
+Daily water needs: 2-3 liters minimum. More in heat, at altitude, or with physical exertion. Signs of dehydration begin at 1-2% body water loss.
+
+### Fire
+Tinder (catches spark): dry grass, bark shavings, dryer lint, birch bark, fatwood, char cloth
+Kindling (builds flame): small dry twigs, pencil thickness
+Fuel (sustains): larger dry wood, wrist to arm thickness
+
+Fire lay methods:
+- Teepee: tinder in center, kindling leaned around it
+- Log cabin: tinder in center, kindling stacked around
+- Lean-to: tinder against log, kindling leaned on log
+- Dakota fire hole: two connected holes — burns hot with less smoke, less visible
+
+Fire starting:
+- Matches/lighter (keep dry in sealed bag)
+- Ferro rod: scrape with knife spine at 45°
+- Bow drill: hardwood fireboard, softwood spindle, fast bow strokes
+- Hand drill: softwood fireboard, straight dry spindle, roll between palms
+- Battery + steel wool: touch terminals to fine steel wool, it ignites instantly
+- Flint + steel: strike at sharp angle, catch sparks on char cloth
+
+### Shelter
+Priorities: protection from wind, rain, ground cold
+Location: avoid hilltops (wind), valleys (cold air pools), dead trees, flood zones
+Types:
+- Debris hut: A-frame of branch, pile leaves/debris 3 ft thick
+- Lean-to: angled roof against support, debris covering
+- Snow cave: dig into drift, sleeping platform higher than entrance
+- Tarp/poncho shelter: fastest option if materials available
+
+Insulation from ground is critical — use leaves, pine needles, bark. Ground steals body heat 20x faster than air.
+
+### Food
+Priorities: water and shelter come first, you can survive weeks without food
+
+Safe to eat (when properly identified):
+- Dandelions (all parts)
+- Cattails (roots, shoots, pollen)
+- Acorns (leach tannins by soaking in running water or boiling with water changes)
+- Pine needles (tea = vitamin C; inner bark is edible)
+- Clover (flowers and leaves)
+- Plantain (the weed, not the banana — leaves are edible and medicinal)
+
+Universal Edibility Test (last resort — takes 24+ hours):
+1. Test one plant part at a time
+2. Smell — reject if bitter/soapy
+3. Touch to wrist — wait 15 min for reaction
+4. Touch to lip — wait 15 min
+5. Touch to tongue — wait 15 min
+6. Chew small amount, spit out — wait 15 min
+7. Swallow small amount — wait 8 hours
+8. Eat larger amount — wait 8 hours
+9. If no reaction, plant part is likely safe
+
+AVOID: mushrooms (too risky without expert ID), plants with milky sap (except dandelion), umbrella-shaped flower clusters, shiny leaves, plants with almond scent in leaves/bark, white or yellow berries
+
+### Trapping & Fishing
+Simple snare: loop of wire or cord on an animal trail, anchored to a stake or tree
+Fishing without a rod: gorge hook (sharpened stick with bait), hand lines, improvised net
+Insects: grasshoppers, crickets, ants, larvae — remove legs/wings, cook if possible. Avoid brightly colored insects.
+
+### Navigation
+Without compass:
+- Sun rises in east, sets in west (roughly)
+- In Northern Hemisphere: sun is due south at solar noon
+- North Star (Polaris): follow Big Dipper's two "pointer stars" 5x the distance between them
+- Stick shadow method: mark shadow tip, wait 15 min, mark again — line points east-west
+- Crescent moon: line through the horns points roughly south (Northern Hemisphere)
+- Moss grows on all sides of trees (unreliable as sole method)
+
+With map:
+- Orient map to terrain features
+- Triangulate position using 3 known landmarks
+- Follow terrain features (ridges, rivers) rather than trying to hold a bearing through dense forest
+
+### Signaling
+- Signal fires: 3 fires in triangle (international distress)
+- Green branches/leaves on fire for smoke during day
+- Mirror flash toward aircraft (any shiny surface works)
+- Ground signals: large X = need medical help; V = need assistance; → = traveling this direction
+- Bright clothing/materials in open areas
+- Whistle: 3 blasts = distress (carry a whistle — sound travels farther than voice)
+
+### Knots
+- Bowline: fixed loop that won't slip (rescue, tie to anchor)
+- Clove hitch: quick attachment to a post or tree (shelters, securing loads)
+- Taut-line hitch: adjustable tension (tent/tarp guy lines)
+- Figure-8: stopper knot, also used in climbing
+- Square knot: joining two ropes of equal diameter (bandaging, bundles)
+
+## RESOURCES IN THIS ARCHIVE
+
+This archive contains:
+- Wikipedia: comprehensive encyclopedia (search any topic)
+- Project Gutenberg: 70,000+ books
+- Stack Overflow: programming and technical Q&A
+- Medical guides: "Where There Is No Doctor", first aid manuals
+- Survival guides: US Army FM 21-76 survival manual
+- Offline maps: OpenStreetMap data for navigation
+- How-to videos: practical skills demonstrations
+
+To access these resources, use the tabs in the interface or search for specific topics.

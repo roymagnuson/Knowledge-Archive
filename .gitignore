@@ -1,0 +1,25 @@
+# Data directories (too large for git)
+kiwix/
+met_art/
+sheet_music/
+llm/
+library/
+maps/
+medical/
+survival/
+python_portable/
+launch/
+
+# Generated index
+medical_index.json
+music_text_index.json
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc

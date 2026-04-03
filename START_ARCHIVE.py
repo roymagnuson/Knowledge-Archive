@@ -175,6 +175,11 @@ processes = []
 WORD_INDEX = set()
 MUSIC_TEXT_INDEX = {}
 MEDICAL_INDEX = []  # Cached in memory for RAG
+GUTENBERG_CATALOG = []  # [{title, author, id, shelf}, ...]
+GUTENBERG_ID_MAP = {}   # {gutenberg_id: title}
+GUTENBERG_ZIM_NAME = None  # e.g. "gutenberg_en_all_2025-11"
+GUTENBERG_CONTENT_CACHE = {}  # LRU-ish cache for cleaned book HTML
+GUTENBERG_CACHE_MAX = 50
 
 def load_music_text_index():
     """Load the music PDF text index for full-text music search."""
@@ -207,6 +212,118 @@ def build_word_index():
         print(f"  Word index: {len(WORD_INDEX)} unique terms")
     except Exception as e:
         print(f"  Word index failed: {e}")
+
+
+def detect_gutenberg_zim():
+    """Detect the Gutenberg ZIM content name from Kiwix's OPDS catalog."""
+    global GUTENBERG_ZIM_NAME
+    try:
+        url = f'http://localhost:{KIWIX_PORT}/catalog/v2/entries'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Archive/1.0'})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            xml = resp.read().decode('utf-8', errors='replace')
+        # Find gutenberg entry and extract content path
+        for m in re.finditer(r'<name>(gutenberg[^<]*)</name>', xml):
+            name = m.group(1)
+            # Find the corresponding text/html link
+            chunk = xml[m.end():m.end() + 500]
+            link_m = re.search(r'href="/content/([^"]+)"', chunk)
+            if link_m:
+                GUTENBERG_ZIM_NAME = link_m.group(1)
+                print(f"  Gutenberg ZIM: {GUTENBERG_ZIM_NAME}")
+                return
+    except Exception as e:
+        print(f"  Gutenberg ZIM detection failed: {e}")
+
+
+def load_gutenberg_catalog():
+    """Load the full Gutenberg book catalog from Kiwix."""
+    global GUTENBERG_CATALOG, GUTENBERG_ID_MAP
+    if not GUTENBERG_ZIM_NAME:
+        return
+    try:
+        url = f'http://localhost:{KIWIX_PORT}/content/{GUTENBERG_ZIM_NAME}/full_by_popularity.js'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Archive/1.0'})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = resp.read().decode('utf-8', errors='replace')
+        # Parse: var json_data = [[title, author, pop, id, shelf], ...]
+        arr_str = data.split('var json_data = ', 1)[1]
+        depth = 0
+        end = 0
+        for i, c in enumerate(arr_str):
+            if c == '[':
+                depth += 1
+            elif c == ']':
+                depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+        raw = json.loads(arr_str[:end])
+        catalog = []
+        id_map = {}
+        for item in raw:
+            entry = {
+                'title': item[0],
+                'author': item[1],
+                'id': item[3],
+                'shelf': item[4] if len(item) > 4 else '',
+            }
+            catalog.append(entry)
+            id_map[item[3]] = item[0]
+        GUTENBERG_CATALOG = catalog
+        GUTENBERG_ID_MAP = id_map
+        print(f"  Gutenberg catalog: {len(catalog)} books")
+    except Exception as e:
+        print(f"  Gutenberg catalog failed: {e}")
+
+
+def get_gutenberg_content(book_id):
+    """Fetch and clean a Gutenberg book's HTML from Kiwix."""
+    if book_id in GUTENBERG_CONTENT_CACHE:
+        return GUTENBERG_CONTENT_CACHE[book_id]
+    if not GUTENBERG_ZIM_NAME or book_id not in GUTENBERG_ID_MAP:
+        return None
+    title = GUTENBERG_ID_MAP[book_id]
+    encoded_title = urllib.parse.quote(title)
+    url = f'http://localhost:{KIWIX_PORT}/content/{GUTENBERG_ZIM_NAME}/{encoded_title}.{book_id}'
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Archive/1.0'})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            html = resp.read().decode('utf-8', errors='replace')
+    except Exception:
+        return None
+
+    # Extract body content
+    body_match = re.search(r'<body[^>]*>(.*)</body>', html, re.DOTALL)
+    if not body_match:
+        return None
+    body = body_match.group(1)
+
+    # Remove ZIM overlay elements
+    body = re.sub(r'<span class="zim_info">.*?</span>', '', body, flags=re.DOTALL)
+    body = re.sub(r'<span class="zim_epub">.*?</span>', '', body, flags=re.DOTALL)
+    body = re.sub(r'<span class="zim_up"[^>]*>.*?</span>', '', body, flags=re.DOTALL)
+    body = re.sub(r'<link[^>]*font-awesome[^>]*/>', '', body, flags=re.DOTALL)
+
+    # Remove PG header and footer if present
+    body = re.sub(r'<div[^>]*id="pg-header"[^>]*>.*?</div>\s*', '', body, flags=re.DOTALL)
+    body = re.sub(r'<div[^>]*id="pg-footer"[^>]*>.*?</div>\s*', '', body, flags=re.DOTALL)
+
+    # Rewrite relative image URLs
+    img_base = f'http://localhost:{KIWIX_PORT}/content/{GUTENBERG_ZIM_NAME}/'
+    body = re.sub(r'src="(?!http)([^"]+)"', lambda m: f'src="{img_base}{urllib.parse.quote(m.group(1))}"', body)
+
+    # Strip leading empty divs
+    body = re.sub(r'^(\s*<div>\s*</div>\s*)+', '', body)
+
+    result = {'title': title, 'html': body}
+
+    # Cache with eviction
+    if len(GUTENBERG_CONTENT_CACHE) >= GUTENBERG_CACHE_MAX:
+        oldest = next(iter(GUTENBERG_CONTENT_CACHE))
+        del GUTENBERG_CONTENT_CACHE[oldest]
+    GUTENBERG_CONTENT_CACHE[book_id] = result
+    return result
 
 
 def rag_retrieve(query, max_passages=4, max_chars=2500):
@@ -378,6 +495,19 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
         elif path == '/api/search':
             q = query.get('q', [''])[0]
             self.send_json(self.search_files(q))
+        elif path == '/api/gutenberg/catalog':
+            self.send_json(GUTENBERG_CATALOG)
+        elif path.startswith('/api/gutenberg/content/'):
+            try:
+                book_id = int(path.split('/')[-1])
+            except ValueError:
+                self.send_error(400)
+                return
+            result = get_gutenberg_content(book_id)
+            if result:
+                self.send_json(result)
+            else:
+                self.send_error(404)
         else:
             self.send_error(404)
 
@@ -998,7 +1128,9 @@ def main():
     build_word_index()
     load_music_text_index()
     start_kiwix()
-    
+    detect_gutenberg_zim()
+    load_gutenberg_catalog()
+
     ai_thread = threading.Thread(target=start_llamafile, daemon=True)
     ai_thread.start()
     

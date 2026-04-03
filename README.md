@@ -10,7 +10,8 @@ A browser window opens at http://localhost:9000. That's it.
 
 ## What's Inside
 
-- 6.8M Wikipedia articles, 70K books, 23M Stack Overflow Q&As
+- 6.8M Wikipedia articles, 23M Stack Overflow Q&As
+- 60,000+ books from Project Gutenberg with in-app reader
 - 270+ searchable guides: medical, survival, homesteading, engineering, foraging
 - 9,931 artworks from the Metropolitan Museum
 - 1,800+ classical sheet music scores

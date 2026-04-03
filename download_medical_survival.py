@@ -18,7 +18,6 @@ provided free for download by the publishers.
 import os
 import sys
 import time
-import hashlib
 import subprocess
 from pathlib import Path
 

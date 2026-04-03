@@ -7,7 +7,7 @@ One command to access all of humanity's collected knowledge.
 Usage:
     python START_ARCHIVE.py
 
-Then open http://localhost:5000 in your browser.
+Then open http://localhost:9000 in your browser.
 
 Requirements:
     Python 3.7+ (no external packages required - uses only standard library)
@@ -25,6 +25,7 @@ import webbrowser
 import signal
 import mimetypes
 import urllib.parse
+import urllib.request
 from pathlib import Path
 from functools import partial
 import socket
@@ -148,7 +149,7 @@ COMPOSER_MAP = {
     'Hanon, Charles-Louis': 'Hanon, Charles-Louis',
 }
 
-import re as _re
+import re
 
 def normalize_composer(name):
     """Normalize a composer name to 'Last, First' format."""
@@ -159,7 +160,7 @@ def normalize_composer(name):
         return name
     # Try to split CamelCase Mutopia-style: "AguadoD" -> "Aguado, D."
     # Pattern: uppercase letters mark boundaries, last chunk is initials
-    m = _re.match(r'^([A-Z][a-z]+(?:[A-Z][a-z]+)*)([A-Z]+)$', name)
+    m = re.match(r'^([A-Z][a-z]+(?:[A-Z][a-z]+)*)([A-Z]+)$', name)
     if m:
         last = m.group(1)
         # Split internal CamelCase in last name: "StanchinskyAV" shouldn't split
@@ -195,7 +196,6 @@ def build_word_index():
     if not index_path.exists():
         return
     try:
-        import re
         with open(index_path, 'r', encoding='utf-8') as f:
             MEDICAL_INDEX = json.load(f)
         words = set()
@@ -262,24 +262,8 @@ def rag_retrieve(query, max_passages=4, max_chars=2500):
     return '\n\n'.join(passages)
 
 # =============================================================================
-# SYSTEM PROMPT AND KNOWLEDGE BASE
+# EMERGENCY KNOWLEDGE BASE
 # =============================================================================
-
-SYSTEM_PROMPT = """You are an emergency assistant with access to an offline knowledge archive. You help users find information and provide guidance on survival, medical, and practical topics.
-
-You have direct knowledge of critical emergency procedures loaded below. For detailed information beyond what you know, guide users to the appropriate resources in this archive:
-
-- Wikipedia: Search any topic using the Knowledge tab
-- Medical guides: "Where There Is No Doctor" and first aid manuals in the Medical tab
-- Survival guides: US Army FM 21-76 survival manual in the Survival tab
-- How-to videos: Practical demonstrations in the Videos tab
-- Books: 70,000+ books from Project Gutenberg in the Library tab
-- Maps: Offline OpenStreetMap data in the Maps tab
-
-Be direct, practical, and concise. In emergencies, prioritize immediate actionable steps.
-
-CRITICAL KNOWLEDGE:
-"""
 
 def load_emergency_knowledge():
     """Load the emergency knowledge file if it exists."""
@@ -394,14 +378,11 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
         elif path == '/api/search':
             q = query.get('q', [''])[0]
             self.send_json(self.search_files(q))
-        elif path == '/api/system-prompt':
-            self.send_text(SYSTEM_PROMPT + EMERGENCY_KNOWLEDGE)
         else:
             self.send_error(404)
 
     def handle_chat(self):
         """Handle chat with RAG: retrieve relevant passages, send to LLM, stream response."""
-        import urllib.request
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(content_length)
@@ -477,8 +458,6 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
         """Proxy search to Kiwix and parse results."""
         if not query:
             return []
-        import urllib.request
-        import re
         try:
             url = f'http://localhost:{KIWIX_PORT}/search?pattern={urllib.parse.quote(query)}&pageLength=8'
             req = urllib.request.Request(url, headers={'User-Agent': 'Archive/1.0'})
@@ -558,12 +537,10 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
     def search_medical(self, query, category_filter=None):
         if not query:
             return {'results': [], 'suggestions': []}
-        index_path = ARCHIVE_ROOT / 'medical_index.json'
-        if not index_path.exists():
+        if not MEDICAL_INDEX:
             return {'results': [], 'suggestions': []}
         try:
-            with open(index_path, 'r', encoding='utf-8') as f:
-                index = json.load(f)
+            index = MEDICAL_INDEX
             query_lower = query.lower()
             results = []
             for doc in index:
@@ -635,9 +612,8 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
                 if path.is_file() and path.suffix.lower() == '.pdf' and not path.name.startswith('.'):
                     name = path.stem.replace('_', ' ').replace('-', ' ')
                     # Clean up common IA naming artifacts
-                    for suffix in [' text', ' encrypted']:
-                        if name.lower().endswith(suffix):
-                            continue
+                    if any(name.lower().endswith(s) for s in (' text', ' encrypted')):
+                        continue
                     files.append({
                         'name': name,
                         'path': str(path.relative_to(self.archive_root)),
@@ -813,18 +789,21 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
                 pass
 
         try:
-            with open(full_path, 'rb') as f:
-                content = f.read()
             self.send_response(200)
             self.send_header('Content-Type', mime_type)
-            self.send_header('Content-Length', len(content))
+            self.send_header('Content-Length', file_size)
             self.send_header('Accept-Ranges', 'bytes')
             # Force PDFs to display inline in browser instead of downloading
             if mime_type == 'application/pdf':
                 self.send_header('Content-Disposition', f'inline; filename="{full_path.name}"')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(content)
+            with open(full_path, 'rb') as f:
+                while True:
+                    chunk = f.read(65536)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
         except Exception as e:
             self.send_error(500, str(e))
     

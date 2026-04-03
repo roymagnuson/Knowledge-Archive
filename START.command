@@ -7,9 +7,14 @@
 cd "$(dirname "$0")"
 clear
 
-# Kill any existing instance
+# Stop any previous archive instance (only kill python/kiwix/llamafile processes on our ports)
 for port in 9000 8080 8081; do
-    lsof -ti :$port 2>/dev/null | xargs kill -9 2>/dev/null
+    lsof -ti :$port 2>/dev/null | while read pid; do
+        cmd=$(ps -p "$pid" -o comm= 2>/dev/null)
+        case "$cmd" in
+            *python*|*kiwix*|*llamafile*) kill "$pid" 2>/dev/null ;;
+        esac
+    done
 done
 sleep 1
 

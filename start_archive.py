@@ -5,7 +5,7 @@ Emergency Knowledge Archive - Unified Interface Server
 One command to access all of humanity's collected knowledge.
 
 Usage:
-    python START_ARCHIVE.py
+    python start_archive.py
 
 Then open http://localhost:9000 in your browser.
 
@@ -14,21 +14,23 @@ Requirements:
 """
 
 import http.server
-import socketserver
 import json
+import math
+import mimetypes
 import os
-import sys
+import re
+import signal
+import socket
+import socketserver
 import subprocess
+import sys
 import threading
 import time
-import webbrowser
-import signal
-import mimetypes
 import urllib.parse
 import urllib.request
-from pathlib import Path
+import webbrowser
 from functools import partial
-import socket
+from pathlib import Path
 
 # =============================================================================
 # CONFIGURATION
@@ -37,6 +39,17 @@ import socket
 PORT = 9000
 KIWIX_PORT = 8080
 LLAMAFILE_PORT = 8081
+
+# Search and snippet tuning
+SNIPPET_CONTEXT_CHARS = 60       # chars before/after match in search snippets
+MEDICAL_SNIPPET_CONTEXT = 80     # chars before/after match in medical search
+RAG_SNIPPET_CHARS = 800          # max chars per RAG passage
+RAG_SNIPPET_MARGIN = 400         # chars before/after best match in RAG trimming
+MAX_SEARCH_RESULTS = 50          # max results returned by search endpoints
+
+# BM25 parameters
+BM25_K1 = 1.5   # term frequency saturation
+BM25_B = 0.75   # document length normalization
 
 ARCHIVE_ROOT = Path(__file__).parent.resolve()
 
@@ -54,102 +67,17 @@ DIRS = {
     'maps': ARCHIVE_ROOT / 'maps',
 }
 
-# Composer name normalization
-COMPOSER_MAP = {
-    # Mutopia short codes -> proper names
-    'BachJS': 'Bach, Johann Sebastian',
-    'BachCPE': 'Bach, Carl Philipp Emanuel',
-    'BeethovenLv': 'Beethoven, Ludwig van',
-    'BrahmsJ': 'Brahms, Johannes',
-    'ChopinFF': 'Chopin, Frederic',
-    'DebussyC': 'Debussy, Claude',
-    'DvorakA': 'Dvorak, Antonin',
-    'FaureG': 'Faure, Gabriel',
-    'FranckC': 'Franck, Cesar',
-    'GriegE': 'Grieg, Edvard',
-    'HandelGF': 'Handel, George Frideric',
-    'HaydnFJ': 'Haydn, Franz Joseph',
-    'HaydnJM': 'Haydn, Johann Michael',
-    'LisztF': 'Liszt, Franz',
-    'MozartWA': 'Mozart, Wolfgang Amadeus',
-    'MendelssohnF': 'Mendelssohn, Felix',
-    'Mendelssohn-BartholdyF': 'Mendelssohn, Felix',
-    'RachmaninoffS': 'Rachmaninoff, Sergei',
-    'SchumannR': 'Schumann, Robert',
-    'SchubertF': 'Schubert, Franz',
-    'TchaikovskyPI': 'Tchaikovsky, Pyotr Ilyich',
-    'VivaldiA': 'Vivaldi, Antonio',
-    'VerdiG': 'Verdi, Giuseppe',
-    'SatieE': 'Satie, Erik',
-    'BartokB': 'Bartok, Bela',
-    'PurcellH': 'Purcell, Henry',
-    'TelemannGP': 'Telemann, Georg Philipp',
-    'PachelbelJ': 'Pachelbel, Johann',
-    'ScarlattiD': 'Scarlatti, Domenico',
-    'PaganiniN': 'Paganini, Niccolo',
-    'SorF': 'Sor, Fernando',
-    'CarcassiM': 'Carcassi, Matteo',
-    'CarulliF': 'Carulli, Ferdinando',
-    'GiulianiM': 'Giuliani, Mauro',
-    'TarregaF': 'Tarrega, Francisco',
-    'CzernyC': 'Czerny, Carl',
-    'ClementiM': 'Clementi, Muzio',
-    'BurgmullerJFF': 'Burgmuller, Johann Friedrich Franz',
-    'JoplinS': 'Joplin, Scott',
-    'DowlandJ': 'Dowland, John',
-    'SousaJP': 'Sousa, John Philip',
-    'GottschalkLM': 'Gottschalk, Louis Moreau',
-    'GounodC': 'Gounod, Charles',
-    'KuhlauF': 'Kuhlau, Friedrich',
-    'LullyJB': 'Lully, Jean-Baptiste',
-    'MonteverdiC': 'Monteverdi, Claudio',
-    'MorleyT': 'Morley, Thomas',
-    'FosterSC': 'Foster, Stephen Collins',
-    'HolstGT': 'Holst, Gustav',
-    'RameauJP': 'Rameau, Jean-Philippe',
-    'BuxtehudeD': 'Buxtehude, Dietrich',
-    'QuantzJJ': 'Quantz, Johann Joachim',
-    'SpohrL': 'Spohr, Louis',
-    'ScriabinA': 'Scriabin, Alexander',
-    'SullivanA': 'Sullivan, Arthur',
-    'TallisT': 'Tallis, Thomas',
-    'WeelkesT': 'Weekes, Thomas',
-    'GalileiV': 'Galilei, Vincenzo',
-    'GesualdoC': 'Gesualdo, Carlo',
-    'PorporaN': 'Porpora, Nicola',
-    'FrobergerJJ': 'Froberger, Johann Jacob',
-    'HumperdinckE': 'Humperdinck, Engelbert',
-    'BruchM': 'Bruch, Max',
-    'BrucknerA': 'Bruckner, Anton',
-    'AlbenizIMF': 'Albeniz, Isaac',
-    'AlkanCV': 'Alkan, Charles-Valentin',
-    'MarenzioL': 'Marenzio, Luca',
-    'VictoriaTLd': 'Victoria, Tomas Luis de',
-    'MarcelloB': 'Marcello, Benedetto',
-    'SanzG': 'Sanz, Gaspar',
-    'MertzJK': 'Mertz, Johann Kaspar',
-    'RegerM': 'Reger, Max',
-    'DussekJL': 'Dussek, Jan Ladislav',
-    'FieldJ': 'Field, John',
-    'DevienneF': 'Devienne, Francois',
-    'StraussJJ': 'Strauss, Johann II',
-    'Rimsky-KorsakovN': 'Rimsky-Korsakov, Nikolai',
-    'Saint-SaensC': 'Saint-Saens, Camille',
-    'BoismortierJBd': 'Boismortier, Joseph Bodin de',
-    'LottiA': 'Lotti, Antonio',
-    'MartiniGB': 'Martini, Giovanni Battista',
-    # IA identifiers
-    'Beethoven': 'Beethoven, Ludwig van',
-    # IMSLP with diacritics -> merge with normalized
-    'Bartók, Béla': 'Bartok, Bela',
-    'Chopin, Frédéric': 'Chopin, Frederic',
-    'Dvořák, Antonín': 'Dvorak, Antonin',
-    'Fauré, Gabriel': 'Faure, Gabriel',
-    'Saint-Saëns, Camille': 'Saint-Saens, Camille',
-    'Hanon, Charles-Louis': 'Hanon, Charles-Louis',
-}
+# Composer name normalization (loaded from data/composer_map.json)
+def _load_composer_map():
+    map_path = ARCHIVE_ROOT / 'data' / 'composer_map.json'
+    if map_path.exists():
+        with open(map_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        data.pop('_comment', None)
+        return data
+    return {}
 
-import re
+COMPOSER_MAP = _load_composer_map()
 
 def normalize_composer(name):
     """Normalize a composer name to 'Last, First' format."""
@@ -174,6 +102,7 @@ processes = []
 # Word index for fuzzy search suggestions
 WORD_INDEX = set()
 MUSIC_TEXT_INDEX = {}
+MUSIC_TEXT_INDEX_LOWER = {}  # Pre-lowercased for efficient search
 MEDICAL_INDEX = []  # Cached in memory for RAG
 GUTENBERG_CATALOG = []  # [{title, author, id, shelf}, ...]
 GUTENBERG_ID_MAP = {}   # {gutenberg_id: title}
@@ -183,33 +112,86 @@ GUTENBERG_CACHE_MAX = 50
 
 def load_music_text_index():
     """Load the music PDF text index for full-text music search."""
-    global MUSIC_TEXT_INDEX
+    global MUSIC_TEXT_INDEX, MUSIC_TEXT_INDEX_LOWER
     index_path = ARCHIVE_ROOT / 'music_text_index.json'
     if not index_path.exists():
         return
     try:
         with open(index_path, 'r', encoding='utf-8') as f:
             MUSIC_TEXT_INDEX = json.load(f)
+        MUSIC_TEXT_INDEX_LOWER = {path: text.lower() for path, text in MUSIC_TEXT_INDEX.items()}
         print(f"  Music text index: {len(MUSIC_TEXT_INDEX)} PDFs with text")
     except Exception as e:
         print(f"  Music text index failed: {e}")
 
+# BM25 index structures (built at startup)
+BM25_INVERTED = {}    # term -> [(passage_idx, tf), ...]
+BM25_IDF = {}         # term -> IDF value
+BM25_DOC_LENS = []    # passage_idx -> word count
+BM25_AVG_DL = 0       # average document (passage) length
+BM25_PASSAGES = []    # passage_idx -> (doc_title, doc_category, page_num, text, doc_id)
+
 def build_word_index():
-    """Build a set of unique words from the medical index for spelling suggestions. Also cache the index for RAG."""
+    """Load the medical index, build spelling suggestions, and build BM25 inverted index for RAG."""
     global WORD_INDEX, MEDICAL_INDEX
+    global BM25_INVERTED, BM25_IDF, BM25_DOC_LENS, BM25_AVG_DL, BM25_PASSAGES
     index_path = ARCHIVE_ROOT / 'medical_index.json'
     if not index_path.exists():
         return
     try:
         with open(index_path, 'r', encoding='utf-8') as f:
             MEDICAL_INDEX = json.load(f)
+
+        # Build spelling suggestion word set
         words = set()
         for doc in MEDICAL_INDEX:
             for page in doc.get('pages', []):
                 for w in re.findall(r'[a-zA-Z]{4,}', page.get('text', '')):
                     words.add(w.lower())
         WORD_INDEX = words
+
+        # Build BM25 inverted index over all passages
+        passages = []
+        doc_lens = []
+        inverted = {}  # term -> [(passage_idx, tf), ...]
+
+        for doc in MEDICAL_INDEX:
+            for page in doc.get('pages', []):
+                text = page.get('text', '')
+                passage_idx = len(passages)
+                passages.append((doc['title'], doc['category'], page['page'], text, doc['id']))
+
+                # Tokenize: lowercase words of 3+ chars
+                terms = re.findall(r'[a-zA-Z]{3,}', text.lower())
+                doc_lens.append(len(terms))
+
+                # Count term frequencies for this passage
+                tf_map = {}
+                for t in terms:
+                    tf_map[t] = tf_map.get(t, 0) + 1
+
+                for term, tf in tf_map.items():
+                    if term not in inverted:
+                        inverted[term] = []
+                    inverted[term].append((passage_idx, tf))
+
+        n_passages = len(passages)
+        avg_dl = sum(doc_lens) / n_passages if n_passages > 0 else 1
+
+        # Precompute IDF for each term
+        idf = {}
+        for term, postings in inverted.items():
+            df = len(postings)
+            idf[term] = math.log((n_passages - df + 0.5) / (df + 0.5) + 1)
+
+        BM25_PASSAGES = passages
+        BM25_DOC_LENS = doc_lens
+        BM25_AVG_DL = avg_dl
+        BM25_INVERTED = inverted
+        BM25_IDF = idf
+
         print(f"  Word index: {len(WORD_INDEX)} unique terms")
+        print(f"  BM25 index: {n_passages} passages, {len(inverted)} terms")
     except Exception as e:
         print(f"  Word index failed: {e}")
 
@@ -327,45 +309,50 @@ def get_gutenberg_content(book_id):
 
 
 def rag_retrieve(query, max_passages=4, max_chars=2500):
-    """Retrieve relevant passages from the library index for RAG context."""
-    if not MEDICAL_INDEX or not query:
+    """Retrieve relevant passages using BM25 scoring."""
+    if not BM25_PASSAGES or not query:
         return ""
-    query_lower = query.lower()
-    # Extract key terms (skip very short words)
-    terms = [w for w in query_lower.split() if len(w) >= 3]
+    # Tokenize query the same way as the index
+    terms = [w for w in re.findall(r'[a-zA-Z]{3,}', query.lower())]
     if not terms:
         return ""
 
-    scored = []
-    for doc in MEDICAL_INDEX:
-        for page in doc.get('pages', []):
-            text = page.get('text', '')
-            text_lower = text.lower()
-            # Score by number of query terms found
-            hits = sum(1 for t in terms if t in text_lower)
-            if hits > 0:
-                scored.append((hits, doc['title'], doc['category'], page['page'], text, doc['id']))
+    # Score passages using BM25
+    scores = {}  # passage_idx -> score
+    for term in terms:
+        if term not in BM25_INVERTED:
+            continue
+        idf = BM25_IDF[term]
+        for passage_idx, tf in BM25_INVERTED[term]:
+            dl = BM25_DOC_LENS[passage_idx]
+            # BM25 formula
+            numerator = tf * (BM25_K1 + 1)
+            denominator = tf + BM25_K1 * (1 - BM25_B + BM25_B * dl / BM25_AVG_DL)
+            scores[passage_idx] = scores.get(passage_idx, 0) + idf * numerator / denominator
 
-    # Sort by relevance (most terms matched)
-    scored.sort(key=lambda x: -x[0])
+    if not scores:
+        return ""
+
+    # Rank by score descending
+    ranked = sorted(scores.items(), key=lambda x: -x[1])
 
     # Build context string within char budget
     passages = []
     total = 0
-    seen_docs = set()
-    for hits, title, category, page_num, text, doc_id in scored[:max_passages * 2]:
-        # Trim long passages to ~800 chars around the best match
+    for passage_idx, score in ranked:
+        title, category, page_num, text, doc_id = BM25_PASSAGES[passage_idx]
+
+        # Trim long passages around the best matching term
         snippet = text
-        if len(snippet) > 800:
-            # Find best position
+        if len(snippet) > RAG_SNIPPET_CHARS:
             best_pos = 0
             for t in terms:
                 pos = text.lower().find(t)
                 if pos >= 0:
                     best_pos = pos
                     break
-            start = max(0, best_pos - 400)
-            end = min(len(text), best_pos + 400)
+            start = max(0, best_pos - RAG_SNIPPET_MARGIN)
+            end = min(len(text), best_pos + RAG_SNIPPET_MARGIN)
             snippet = ('...' if start > 0 else '') + text[start:end] + ('...' if end < len(text) else '')
 
         entry = f"[{category.upper()} - {title}, p{page_num} | ref:{doc_id}]\n{snippet}"
@@ -630,15 +617,13 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
             return []
         query_lower = query.lower()
         results = []
-        # Search text index
-        for path, text in MUSIC_TEXT_INDEX.items():
-            if query_lower in text.lower():
-                # Extract snippet
-                idx = text.lower().find(query_lower)
-                start = max(0, idx - 60)
-                end = min(len(text), idx + len(query) + 60)
+        for path, text_lower in MUSIC_TEXT_INDEX_LOWER.items():
+            if query_lower in text_lower:
+                text = MUSIC_TEXT_INDEX[path]
+                idx = text_lower.find(query_lower)
+                start = max(0, idx - SNIPPET_CONTEXT_CHARS)
+                end = min(len(text), idx + len(query) + SNIPPET_CONTEXT_CHARS)
                 snippet = ('...' if start > 0 else '') + text[start:end].strip() + ('...' if end < len(text) else '')
-                # Derive name from path
                 p = Path(path)
                 name = p.stem.replace('_', ' ').replace('-', ' ')
                 results.append({
@@ -646,7 +631,7 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
                     'name': name,
                     'snippet': snippet,
                 })
-                if len(results) >= 50:
+                if len(results) >= MAX_SEARCH_RESULTS:
                     break
         return results
 
@@ -680,8 +665,8 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
                     if query_lower in page.get('text', '').lower():
                         text = page['text']
                         idx = text.lower().find(query_lower)
-                        start = max(0, idx - 80)
-                        end = min(len(text), idx + len(query) + 80)
+                        start = max(0, idx - MEDICAL_SNIPPET_CONTEXT)
+                        end = min(len(text), idx + len(query) + MEDICAL_SNIPPET_CONTEXT)
                         snippet = ('...' if start > 0 else '') + text[start:end].strip() + ('...' if end < len(text) else '')
                         results.append({
                             'doc_id': doc['id'],
@@ -690,7 +675,7 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
                             'page': page['page'],
                             'snippet': snippet
                         })
-                        if len(results) >= 50:
+                        if len(results) >= MAX_SEARCH_RESULTS:
                             return {'results': results, 'suggestions': []}
 
             # If no results, suggest corrections
@@ -867,7 +852,7 @@ class ArchiveHandler(http.server.SimpleHTTPRequestHandler):
                         'path': str(path.relative_to(self.archive_root)),
                         'category': category.replace('_', ' ').title()
                     })
-        return results[:50]
+        return results[:MAX_SEARCH_RESULTS]
     
     def serve_file(self, file_path):
         # Decode URL-encoded characters (e.g., %20 -> space)

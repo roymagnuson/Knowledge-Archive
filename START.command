@@ -58,7 +58,7 @@ echo "  Using: $PYTHON"
 echo ""
 
 # ------- Start -------
-"$PYTHON" START_ARCHIVE.py
+"$PYTHON" start_archive.py
 
 # Keep window open on error
 if [[ $? -ne 0 ]]; then

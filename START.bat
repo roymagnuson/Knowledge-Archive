@@ -9,7 +9,7 @@ echo.
 REM Try portable Python first
 if exist "python_portable\python_windows\python\python.exe" (
     echo   Using portable Python...
-    "python_portable\python_windows\python\python.exe" START_ARCHIVE.py
+    "python_portable\python_windows\python\python.exe" start_archive.py
     goto :end
 )
 
@@ -17,7 +17,7 @@ REM Try system Python
 where python >nul 2>nul
 if %errorlevel% equ 0 (
     echo   Using system Python...
-    python START_ARCHIVE.py
+    python start_archive.py
     goto :end
 )
 
@@ -25,7 +25,7 @@ REM Try py launcher
 where py >nul 2>nul
 if %errorlevel% equ 0 (
     echo   Using py launcher...
-    py START_ARCHIVE.py
+    py start_archive.py
     goto :end
 )
 

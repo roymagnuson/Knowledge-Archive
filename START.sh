@@ -36,20 +36,20 @@ fi
 
 if [[ -n "$PORTABLE_PYTHON" ]]; then
     echo "  Using portable Python..."
-    "$PORTABLE_PYTHON" START_ARCHIVE.py
+    "$PORTABLE_PYTHON" start_archive.py
     exit 0
 fi
 
 # Try system Python
 if command -v python3 &> /dev/null; then
     echo "  Using system Python..."
-    python3 START_ARCHIVE.py
+    python3 start_archive.py
     exit 0
 fi
 
 if command -v python &> /dev/null; then
     echo "  Using system Python..."
-    python START_ARCHIVE.py
+    python start_archive.py
     exit 0
 fi
 

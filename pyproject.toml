@@ -1,0 +1,18 @@
+[project]
+name = "knowledge-archive"
+version = "1.0.0"
+description = "Offline knowledge archive server — Wikipedia, medical guides, sheet music, books, and more"
+requires-python = ">=3.7"
+license = "MIT"
+
+# The archive server itself has zero runtime dependencies (stdlib only).
+# Build/utility scripts need these:
+[project.optional-dependencies]
+build = [
+    "pypdf",
+    "requests",
+    "tqdm",
+]
+
+[project.scripts]
+start-archive = "start_archive:main"
